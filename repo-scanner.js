@@ -74,12 +74,11 @@ gitRepos.forEach(gitRepo => {
     `cd ${gitRepo} && git config --get remote.origin.url`,
     (err, stdout, stderr) => {
       if (err) {
-        //some err occurred
         console.error(err);
       } else {
-        // the *entire* stdout and stderr (buffered)
-        console.log(`stdout: ${stdout}`);
-        console.log(`stderr: ${stderr}`);
+        let gitOrigins = {};
+        gitOrigins.gitRepo = gitRepo;
+        gitOrigins.url = stdout.replace(/\r?\n|\r/g, '');
       }
     }
   );
