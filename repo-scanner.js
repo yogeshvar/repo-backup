@@ -1,64 +1,29 @@
-const { lstatSync, readdirSync, existsSync } = require('fs');
-const { join } = require('path');
-const os = require('os');
+const fsHelper = require('./helpers/fs.js');
 const { exec } = require('child_process');
 
-const isFile = source => lstatSync(source).isFile();
-
-const isDirectory = source => lstatSync(source).isDirectory();
-
-const getDirectories = source =>
-  readdirSync(source)
-    .map(name => join(source, name))
-    .filter(isDirectory);
-
-const isDotDirectory = path => /(^|\/)\.[^\/\.]/g.test(path);
-
-const getDirectoryNames = source =>
-  readdirSync(source, { withFileTypes: true })
-    .filter(directory => directory.isDirectory())
-    .map(directory => directory.name);
-
-const getFiles = source =>
-  readdirSync(source)
-    .map(name => join(source, name))
-    .filter(isFile);
-
-const ignoreDotDirectories = source =>
-  readdirSync(source)
-    .map(name => join(source, name))
-    .filter(file => {
-      if (isDotDirectory(file)) {
-        return null;
-      } else {
-        return file;
-      }
-    });
-const isGitRepo = directory => existsSync(join(directory, '.git'));
-
-getRootDirectories = ignoreDotDirectories(os.homedir());
+getRootDirectories = fsHelper.ignoreDotDirectories('/Users/mags/Work');
 
 let gitRepos = [];
 
 getRootDirectories.forEach(rootDir => {
-  if (!isDirectory(rootDir)) {
-    if (isGitRepo(rootDir)) {
+  if (!fsHelper.isDirectory(rootDir)) {
+    if (fsHelper.isGitRepo(rootDir)) {
       gitRepos.push(rootDir);
     }
   } else {
-    const x = ignoreDotDirectories(rootDir);
+    const x = fsHelper.ignoreDotDirectories(rootDir);
     x.forEach(dir => {
-      if (isGitRepo(dir)) {
+      if (fsHelper.isGitRepo(dir)) {
         gitRepos.push(dir);
-      } else if (isDirectory(dir)) {
-        const y = getDirectories(dir);
+      } else if (fsHelper.isDirectory(dir)) {
+        const y = fsHelper.getDirectories(dir);
         y.forEach(directory => {
-          if (isGitRepo(directory)) {
+          if (fsHelper.isGitRepo(directory)) {
             gitRepos.push(directory);
-          } else if (isDirectory(directory)) {
-            const z = getDirectories(directory);
+          } else if (fsHelper.isDirectory(directory)) {
+            const z = fsHelper.getDirectories(directory);
             z.forEach(dir => {
-              if (isGitRepo(dir)) {
+              if (fsHelper.isGitRepo(dir)) {
                 gitRepos.push(dir);
               }
             });
@@ -79,7 +44,10 @@ gitRepos.forEach(gitRepo => {
         let gitOrigins = {};
         gitOrigins.gitRepo = gitRepo;
         gitOrigins.url = stdout.replace(/\r?\n|\r/g, '');
+        console.log(gitOrigins);
       }
     }
   );
 });
+
+console.log(gitRepos);
